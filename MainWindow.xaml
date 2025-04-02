@@ -1,0 +1,61 @@
+﻿<Window x:Class="CustomerApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Customer Management" Height="500" Width="650">
+    <Grid>
+        <!-- Define Rows for Layout -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Row for Form -->
+            <RowDefinition Height="Auto"/>
+            <!-- Row for Buttons -->
+            <RowDefinition Height="*"/>
+            <!-- Row for DataGrid -->
+        </Grid.RowDefinitions>
+
+        <!-- Form Section -->
+        <StackPanel Grid.Row="0" Orientation="Vertical" Margin="20,20,0,0">
+            <!-- Label for Customer Name -->
+            <TextBlock Text="Customer Name:" FontWeight="Bold" Margin="0,5,0,2"/>
+            <TextBox x:Name="txtName" Width="200" Margin="0,5,0,10" Text="Enter Name" Foreground="Gray"
+                     GotFocus="TextBox_GotFocus" LostFocus="TextBox_LostFocus"/>
+
+            <!-- Label for Account Number -->
+            <TextBlock Text="Account Number:" FontWeight="Bold" Margin="0,5,0,2"/>
+            <TextBox x:Name="txtAccountNo" Width="200" Margin="0,5,0,10" Text="Enter Account No" Foreground="Gray"
+                     GotFocus="TextBox_GotFocus" LostFocus="TextBox_LostFocus"/>
+
+            <!-- Label for Telephone -->
+            <TextBlock Text="Telephone:" FontWeight="Bold" Margin="0,5,0,2"/>
+            <TextBox x:Name="txtTelephone" Width="200" Margin="0,5,0,10" Text="Enter Telephone" Foreground="Gray"
+                     GotFocus="TextBox_GotFocus" LostFocus="TextBox_LostFocus"/>
+        </StackPanel>
+
+        <!-- Buttons Section -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="20,10,0,10">
+            <Button Content="Add Record" Width="100" Click="AddCustomer" Margin="0,0,10,0"/>
+            <Button Content="View Data" Width="120" Click="ViewData" Margin="0,0,10,0"/>
+            <Button x:Name="btnUpdate" Content="Update" Width="100" Click="UpdateCustomer" Visibility="Collapsed" Margin="0,0,10,0"/>
+            <Button Content="Delete" Width="100" Click="DeleteCustomer"/>
+        </StackPanel>
+
+        <!-- DataGrid Section -->
+        <DataGrid x:Name="customerGrid" Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                  AutoGenerateColumns="False" Margin="20,0,20,20"
+                  SelectionMode="Single" Visibility="Collapsed">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
+                <DataGridTextColumn Header="Account No" Binding="{Binding AccountNo}"/>
+                <DataGridTextColumn Header="Telephone" Binding="{Binding Telephone}"/>
+                <DataGridTemplateColumn Header="Actions">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Edit" Click="EditCustomer_Click" Padding="5" Margin="2"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Window>
