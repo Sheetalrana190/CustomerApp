@@ -17,18 +17,14 @@ namespace CustomerApp
         {
             InitializeComponent();
             InitializeDatabase();
-
-            // Ensure the table is hidden at startup
-            customerGrid.Visibility = Visibility.Hidden;
+            customerGrid.Visibility = Visibility.Hidden; // Ensure DataGrid is hidden initially
         }
 
         private void InitializeDatabase()
         {
             try
             {
-                bool isNewDatabase = !System.IO.File.Exists("CustomerDB.sqlite");
-
-                if (isNewDatabase)
+                if (!System.IO.File.Exists("CustomerDB.sqlite"))
                 {
                     SQLiteConnection.CreateFile("CustomerDB.sqlite");
                 }
@@ -36,22 +32,9 @@ namespace CustomerApp
                 using (SQLiteConnection con = new SQLiteConnection(connectionString))
                 {
                     con.Open();
-                    string createTableQuery = "CREATE TABLE IF NOT EXISTS Customers (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT, AccountNo TEXT, Telephone TEXT)";
+                    string createTableQuery = "CREATE TABLE IF NOT EXISTS Customers (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT NOT NULL, AccountNo TEXT NOT NULL, Telephone TEXT NOT NULL)";
                     SQLiteCommand cmd = new SQLiteCommand(createTableQuery, con);
                     cmd.ExecuteNonQuery();
-
-                    // Insert predefined data only if the database is newly created
-                    if (isNewDatabase)
-                    {
-                        string populateDataQuery = "INSERT INTO Customers (Name, AccountNo, Telephone) VALUES " +
-                                                   "('John Doe', '1001', '123-456-7890')," +
-                                                   "('Jane Smith', '1002', '+12 345 678 901')," +
-                                                   "('Michael Brown', '1003', '9876543210')," +
-                                                   "('Emily Davis', '1004', '(987)-654 3210')," +
-                                                   "('William Johnson', '1005', '+44 123 456 789')";
-                        cmd = new SQLiteCommand(populateDataQuery, con);
-                        cmd.ExecuteNonQuery();
-                    }
                 }
             }
             catch (Exception ex)
@@ -62,8 +45,7 @@ namespace CustomerApp
 
         private void TextBox_GotFocus(object sender, RoutedEventArgs e)
         {
-            TextBox textBox = sender as TextBox;
-            if (textBox != null && (textBox.Text == "Enter Name" || textBox.Text == "Enter Account No" || textBox.Text == "Enter Telephone"))
+            if (sender is TextBox textBox && (textBox.Text == "Enter Name" || textBox.Text == "Enter Account No" || textBox.Text == "Enter Telephone"))
             {
                 textBox.Text = "";
                 textBox.Foreground = new SolidColorBrush(Colors.Black);
@@ -72,8 +54,7 @@ namespace CustomerApp
 
         private void TextBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            TextBox textBox = sender as TextBox;
-            if (textBox != null && string.IsNullOrWhiteSpace(textBox.Text))
+            if (sender is TextBox textBox && string.IsNullOrWhiteSpace(textBox.Text))
             {
                 if (textBox.Name == "txtName") textBox.Text = "Enter Name";
                 else if (textBox.Name == "txtAccountNo") textBox.Text = "Enter Account No";
@@ -86,6 +67,16 @@ namespace CustomerApp
         {
             try
             {
+                // Validate empty fields
+                if (string.IsNullOrWhiteSpace(txtName.Text) || txtName.Text == "Enter Name" ||
+                    string.IsNullOrWhiteSpace(txtAccountNo.Text) || txtAccountNo.Text == "Enter Account No" ||
+                    string.IsNullOrWhiteSpace(txtTelephone.Text) || txtTelephone.Text == "Enter Telephone")
+                {
+                    MessageBox.Show("All fields are required. Please fill in Name, Account No, and Telephone.");
+                    return;
+                }
+
+                // Validate telephone format
                 string phoneNumber = txtTelephone.Text.Trim();
                 string pattern = @"^(\+\d{1,3} \d{1,4} \d{4,10}|\(\d{3}\)-\d{3} \d{4}|\d{10})$";
                 if (!Regex.IsMatch(phoneNumber, pattern))
@@ -106,16 +97,63 @@ namespace CustomerApp
                 }
 
                 MessageBox.Show("Customer added successfully.");
-
-                // Clear the fields after successful addition
-                txtName.Text = "Enter Name";
-                txtAccountNo.Text = "Enter Account No";
-                txtTelephone.Text = "Enter Telephone";
-                txtName.Foreground = txtAccountNo.Foreground = txtTelephone.Foreground = new SolidColorBrush(Colors.Gray);
+                ClearFields();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error adding customer: {ex.Message}");
+            }
+        }
+
+        private void UpdateCustomer(object sender, RoutedEventArgs e)
+        {
+            if (_editingId == -1)
+            {
+                MessageBox.Show("No customer selected for editing.");
+                return;
+            }
+
+            // Validate empty fields
+            if (string.IsNullOrWhiteSpace(txtName.Text) || txtName.Text == "Enter Name" ||
+                string.IsNullOrWhiteSpace(txtAccountNo.Text) || txtAccountNo.Text == "Enter Account No" ||
+                string.IsNullOrWhiteSpace(txtTelephone.Text) || txtTelephone.Text == "Enter Telephone")
+            {
+                MessageBox.Show("All fields are required. Please fill in Name, Account No, and Telephone.");
+                return;
+            }
+
+            // Validate telephone format
+            string phoneNumber = txtTelephone.Text.Trim();
+            string pattern = @"^(\+\d{1,3} \d{1,4} \d{4,10}|\(\d{3}\)-\d{3} \d{4}|\d{10})$";
+            if (!Regex.IsMatch(phoneNumber, pattern))
+            {
+                MessageBox.Show("Invalid phone number format. Allowed formats: (XXX)-XXX XXXX, +XX XXX XXX XXXX, or XXXXXXXXXX");
+                txtTelephone.Focus();
+                return;
+            }
+
+            try
+            {
+                using (SQLiteConnection con = new SQLiteConnection(connectionString))
+                {
+                    con.Open();
+                    SQLiteCommand cmd = new SQLiteCommand("UPDATE Customers SET Name=@name, AccountNo=@accountNo, Telephone=@telephone WHERE Id=@id", con);
+                    cmd.Parameters.AddWithValue("@name", txtName.Text);
+                    cmd.Parameters.AddWithValue("@accountNo", txtAccountNo.Text);
+                    cmd.Parameters.AddWithValue("@telephone", txtTelephone.Text);
+                    cmd.Parameters.AddWithValue("@id", _editingId);
+                    cmd.ExecuteNonQuery();
+                }
+
+                MessageBox.Show("Customer updated successfully.");
+                ClearFields();
+                ViewData(sender, e);
+                _editingId = -1;
+                btnUpdate.Visibility = Visibility.Collapsed;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error updating customer: {ex.Message}");
             }
         }
 
@@ -152,9 +190,7 @@ namespace CustomerApp
                     DataTable dt = new DataTable();
                     da.Fill(dt);
                     customerGrid.ItemsSource = dt.DefaultView;
-
-                    // Make the table visible only when View is clicked
-                    customerGrid.Visibility = Visibility.Visible;
+                    customerGrid.Visibility = Visibility.Visible; // Show DataGrid
                 }
             }
             catch (Exception ex)
@@ -176,43 +212,12 @@ namespace CustomerApp
             }
         }
 
-        private void UpdateCustomer(object sender, RoutedEventArgs e)
+        private void ClearFields()
         {
-            if (_editingId == -1)
-            {
-                MessageBox.Show("No customer selected for editing.");
-                return;
-            }
-
-            try
-            {
-                using (SQLiteConnection con = new SQLiteConnection(connectionString))
-                {
-                    con.Open();
-                    SQLiteCommand cmd = new SQLiteCommand("UPDATE Customers SET Name=@name, AccountNo=@accountNo, Telephone=@telephone WHERE Id=@id", con);
-                    cmd.Parameters.AddWithValue("@name", txtName.Text);
-                    cmd.Parameters.AddWithValue("@accountNo", txtAccountNo.Text);
-                    cmd.Parameters.AddWithValue("@telephone", txtTelephone.Text);
-                    cmd.Parameters.AddWithValue("@id", _editingId);
-                    cmd.ExecuteNonQuery();
-                }
-
-                MessageBox.Show("Customer updated successfully.");
-
-                // Clear the entry fields after update
-                txtName.Text = "Enter Name";
-                txtAccountNo.Text = "Enter Account No";
-                txtTelephone.Text = "Enter Telephone";
-                txtName.Foreground = txtAccountNo.Foreground = txtTelephone.Foreground = new SolidColorBrush(Colors.Gray);
-
-                ViewData(sender, e); // Refresh data to show updated table
-                _editingId = -1; // Reset editing state
-                btnUpdate.Visibility = Visibility.Collapsed; // Hide the update button
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error updating customer: {ex.Message}");
-            }
+            txtName.Text = "Enter Name";
+            txtAccountNo.Text = "Enter Account No";
+            txtTelephone.Text = "Enter Telephone";
+            txtName.Foreground = txtAccountNo.Foreground = txtTelephone.Foreground = new SolidColorBrush(Colors.Gray);
         }
     }
 }

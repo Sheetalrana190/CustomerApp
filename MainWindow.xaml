@@ -17,17 +17,17 @@
         <StackPanel Grid.Row="0" Orientation="Vertical" Margin="20,20,0,0">
             <!-- Label for Customer Name -->
             <TextBlock Text="Customer Name:" FontWeight="Bold" Margin="0,5,0,2"/>
-            <TextBox x:Name="txtName" Width="200" Margin="0,5,0,10" Text="Enter Name" Foreground="Gray"
+            <TextBox x:Name="txtName" Width="200" Margin="0,5,0,10"  Foreground="Gray"
                      GotFocus="TextBox_GotFocus" LostFocus="TextBox_LostFocus"/>
 
             <!-- Label for Account Number -->
             <TextBlock Text="Account Number:" FontWeight="Bold" Margin="0,5,0,2"/>
-            <TextBox x:Name="txtAccountNo" Width="200" Margin="0,5,0,10" Text="Enter Account No" Foreground="Gray"
+            <TextBox x:Name="txtAccountNo" Width="200" Margin="0,5,0,10"  Foreground="Gray"
                      GotFocus="TextBox_GotFocus" LostFocus="TextBox_LostFocus"/>
 
             <!-- Label for Telephone -->
             <TextBlock Text="Telephone:" FontWeight="Bold" Margin="0,5,0,2"/>
-            <TextBox x:Name="txtTelephone" Width="200" Margin="0,5,0,10" Text="Enter Telephone" Foreground="Gray"
+            <TextBox x:Name="txtTelephone" Width="200" Margin="0,5,0,10" Foreground="Gray"
                      GotFocus="TextBox_GotFocus" LostFocus="TextBox_LostFocus"/>
         </StackPanel>
 
